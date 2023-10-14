@@ -5,6 +5,15 @@ require('dotenv').config()
 
 const mongoose = require('mongoose')
 
+//sql connection
+const mysql = require('mysql')
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'test'
+})
+connection.connect()
 
 const app = express();
 const port = 3000
@@ -29,13 +38,6 @@ mongoose.connect(process.env.MONGO_URL,connectionParams)
     throw err;
   }})
 
-//mongoDb schema
-const customerSchema = {
-  name: String,
-}; 
-
-const Customer = mongoose.model("Customer", customerSchema);
-
 
 //custom middleware
 const myLogger = (req,res,next)=> {
@@ -46,19 +48,17 @@ const myLogger = (req,res,next)=> {
 
 app.use(myLogger);
 
-
-
 app.post('/', (req, res) => {
   try{      
     if(req.body.name){
       console.log("request -- ")
-
-      const customer = new Customer({
-        name: req.body.name
-      }) 
-
-      customer.save()
       const date = req.body.requestTime
+
+      connection.query(`insert into user_info(id,name) values (1, '${req.body.name}')`, (err) => {
+        if (err) throw err
+      
+        console.log('insert query success')
+      })
       res.status(200).send(`Hello World! Requested at - ${date}` )
     }else{
       throw "Error Found";;
@@ -69,11 +69,11 @@ app.post('/', (req, res) => {
   }
 })
 
-
-
 const homeroute = require("./Routes/home");
 app.use("/home",homeroute);
 
+const customerRoute = require('./Routes/customer');
+app.use("/customer",customerRoute)
  
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
